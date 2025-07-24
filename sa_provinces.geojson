@@ -1,0 +1,170 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "الرياض"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              46,
+              24
+            ],
+            [
+              47,
+              24
+            ],
+            [
+              47,
+              25
+            ],
+            [
+              46,
+              25
+            ],
+            [
+              46,
+              24
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "مكة"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              39,
+              21
+            ],
+            [
+              40,
+              21
+            ],
+            [
+              40,
+              22
+            ],
+            [
+              39,
+              22
+            ],
+            [
+              39,
+              21
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "المدينة"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              39,
+              24
+            ],
+            [
+              40,
+              24
+            ],
+            [
+              40,
+              25
+            ],
+            [
+              39,
+              25
+            ],
+            [
+              39,
+              24
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "الشرقية"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              49,
+              26
+            ],
+            [
+              50,
+              26
+            ],
+            [
+              50,
+              27
+            ],
+            [
+              49,
+              27
+            ],
+            [
+              49,
+              26
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "عسير"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              42,
+              18
+            ],
+            [
+              43,
+              18
+            ],
+            [
+              43,
+              19
+            ],
+            [
+              42,
+              19
+            ],
+            [
+              42,
+              18
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
