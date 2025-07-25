@@ -3,14 +3,14 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 
-# --- Page Config ---
+# Page Config
 st.set_page_config(
     page_title="Saudi Lands Dashboard",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- Load Data ---
+# Load Data
 @st.cache_data
 def load_data(path: str) -> pd.DataFrame:
     df = pd.read_csv(path, encoding="utf-8-sig")
@@ -19,7 +19,7 @@ def load_data(path: str) -> pd.DataFrame:
 
 df = load_data("SA_Aqar.csv")
 
-# --- Sidebar ---
+# Sidebar
 st.sidebar.header("Dashboard Filters")
 
 cities = sorted(df["city"].dropna().unique())
@@ -34,7 +34,7 @@ price_range = st.sidebar.slider(
     step=1000
 )
 
-# --- Filter Data ---
+# Filter Data
 mask = (
     df["price"].between(price_range[0], price_range[1]) &
     (df["city"] == selected_city if selected_city != "All" else True)
@@ -42,10 +42,10 @@ mask = (
 filtered_df = df[mask].copy()
 
 
-# --- Title ---
+# Title
 st.title("🏙️ Saudi Lands Dashboard")
 
-# --- KPI Cards ---
+# KPI Cards
 st.subheader("📊 Key Statistics")
 cols = st.columns(3)
 
@@ -68,11 +68,18 @@ with cols2[2]: stat_card("Price Std Dev", filtered_df["price"].std())
 
 st.markdown("---")
 
-# --- Scatter Plot: Size vs Price ---
-fig = px.scatter(df, x='size', y='price',
-                 title='Size vs Price (Detecting Outliers)',
-                 labels={'size': 'Size (m²)', 'price': 'Price (SAR)'},
-                 width=800, height=600)
+# Scatter Plot: Size vs Price
+fig = px.scatter(df,
+    x='size',
+    y='price',
+    title='Size vs Price (Detecting Outliers)',
+    labels={
+        'size': 'Size (m²)',
+        'price': 'Price (SAR)'
+    },
+    width=800,
+    height=600
+)
 
 st.plotly_chart(fig, use_container_width=True)
 
@@ -107,7 +114,12 @@ fig = px.density_mapbox(
     hover_name="city",
     hover_data=["price", "size"]
 )
-fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+fig.update_layout(margin={
+    "r": 0,
+    "t": 0,
+    "l": 0,
+    "b": 0
+})
 st.plotly_chart(fig, use_container_width=True)
 
 fig = px.box(filtered_df_cleaned, x='city', y='price', color='city',
