@@ -73,8 +73,7 @@ outlier_mask = (
 df_outliers = df_with_outliers[outlier_mask]
 df_no_outliers = df_with_outliers[~outlier_mask]
 
-# FIXED and SAFE filter logic with .eq and debugging
-selected_city = selected_city.strip()
+# FIXED filter logic
 if selected_city != "All":
     no_outliers_filter_mask = (
         df_no_outliers["city"].eq(selected_city) &
@@ -88,18 +87,10 @@ else:
     no_outliers_filter_mask = df_no_outliers["price"].between(price_range[0], price_range[1])
     outliers_filter_mask = df_with_outliers["price"].between(price_range[0], price_range[1])
 
-# Ensure city casing and whitespace match
-st.write("Selected city:", selected_city)
-st.write("Unique cities in cleaned data:", df_with_outliers["city"].unique())
-
 # Apply filters
 df_no_outliers_filtered = df_no_outliers[no_outliers_filter_mask].copy()
 df_outliers_filtered = df_outliers[outliers_filter_mask].copy()
 df_with_outliers_filtered = df_with_outliers[outliers_filter_mask].copy()
-
-# Debugging info
-st.write("Filtered no-outliers rows:", df_no_outliers_filtered.shape[0])
-st.write("Filtered with-outliers rows:", df_with_outliers_filtered.shape[0])
 
 def stat_card(label, value, unit="SAR"):
     if pd.isna(value):
@@ -117,6 +108,31 @@ def stat_card(label, value, unit="SAR"):
         </div>
         """, unsafe_allow_html=True)
 
-# Footer
+with_outliers_tab, without_outliers_tab = st.tabs(["With Outliers", "Without Outliers"])
+
+with with_outliers_tab:
+    st.subheader("📊 Key Statistics (With Outliers)")
+    cols = st.columns(3)
+    with cols[0]: stat_card("Total Listings", df_with_outliers_filtered.shape[0], unit="")
+    with cols[1]: stat_card("Average Price", df_with_outliers_filtered["price"].mean())
+    with cols[2]: stat_card("Price Variance", df_with_outliers_filtered["price"].var())
+
+    cols2 = st.columns(3)
+    with cols2[0]: stat_card("Price Std Dev", df_with_outliers_filtered["price"].std())
+    with cols2[1]: stat_card("Median Price", df_with_outliers_filtered["price"].median())
+
+with without_outliers_tab:
+    st.subheader("📊 Key Statistics (Without Outliers)")
+    st.text("Detected: " + str(df_outliers.shape[0]) + " outliers")
+    cols = st.columns(3)
+    with cols[0]: stat_card("Total Listings", df_no_outliers_filtered.shape[0], unit="")
+    with cols[1]: stat_card("Average Price", df_no_outliers_filtered["price"].mean())
+    with cols[2]: stat_card("Price Variance", df_no_outliers_filtered["price"].var())
+
+    cols2 = st.columns(3)
+    with cols2[0]: stat_card("Price Std Dev", df_no_outliers_filtered["price"].std())
+    with cols2[1]: stat_card("Median Price", df_no_outliers_filtered["price"].median())
+
+
 st.markdown("---")
 st.markdown("\u2705 Built by Meran, Sahar, Naif, Maram, Yazeed, Mohammad")
