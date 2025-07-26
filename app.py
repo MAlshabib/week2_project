@@ -2,6 +2,11 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import numpy as np
+from predictor import load_and_train_model
+
+model = load_and_train_model("SA_Aqar.csv")
+
+
 
 # Page Config
 st.set_page_config(
@@ -81,6 +86,41 @@ outlier_mask = (
 )
 
 
+st.markdown("## 🏠 Predict Your House Price")
+
+with st.form("predict_form"):
+    col1, col2 = st.columns(2)
+
+    with col1:
+        city_input = st.selectbox("City", sorted(df_no_outliers['city'].unique()))
+        district_input = st.selectbox("District", sorted(df_no_outliers[df_no_outliers["city"] == city_input]["district"].unique()))
+        bedrooms = st.number_input("Bedrooms", min_value=0, max_value=20, value=3)
+        bathrooms = st.number_input("Bathrooms", min_value=0, max_value=20, value=2)
+        kitchen = st.number_input("Kitchens", min_value=0, max_value=5, value=1)
+
+    with col2:
+        livingrooms = st.number_input("Living Rooms", min_value=0, max_value=10, value=2)
+        garage = st.selectbox("Garage", ["Yes", "No"])
+        size = st.number_input("Size (m²)", min_value=50, max_value=1000, value=300)
+        property_age = st.number_input("Property Age (years)", min_value=0, max_value=100, value=5)
+
+    submitted = st.form_submit_button("Predict Price")
+
+    if submitted:
+        input_data = pd.DataFrame([{
+            'city': city_input,
+            'district': district_input,
+            'bedrooms': bedrooms,
+            'bathrooms': bathrooms,
+            'kitchen': kitchen,
+            'livingrooms': livingrooms,
+            'garage': 1 if garage == "Yes" else 0,
+            'size': size,
+            'property_age': property_age
+        }])
+
+        predicted_price = model.predict(input_data)[0]
+        st.success(f"🏷️ Estimated House Price: **{int(predicted_price):,} SAR**")
 
 
 # Title
