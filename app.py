@@ -91,9 +91,21 @@ df_no_outliers_filtered = df_no_outliers[no_outliers_filter_mask].copy()
 df_outliers_filtered = df_outliers[outliers_filter_mask].copy()
 df_with_outliers_filtered = df_with_outliers[outliers_filter_mask].copy()
 
-# --- Dashboard Continues ---
-# (Your KPIs, visualizations, and prediction form remain unchanged from here)
-# You can continue from this point and add the rest of the logic below this block as in your original script.
+def stat_card(label, value, unit="SAR"):
+    if pd.isna(value):
+        st.markdown(f"""
+        <div class="card">
+            <h5>{label}</h5>
+            <h3>🚫 No Data</h3>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+        <div class="card">
+            <h5>{label}</h5>
+            <h3>{int(value):,} {unit}</h3>
+        </div>
+        """, unsafe_allow_html=True)
 
 # Footer
 st.markdown("---")
