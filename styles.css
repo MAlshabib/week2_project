@@ -1,30 +1,365 @@
-/* styles.css */
+/* Enhanced styles.css */
 
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Global Variables */
+:root {
+    --primary-color: #00C2FF;
+    --secondary-color: #1f1f1f;
+    --accent-color: #2c2c2c;
+    --text-color: #ffffff;
+    --background-color: #0e1117;
+    --card-bg: #1f1f1f;
+    --hover-color: rgba(0, 194, 255, 0.3);
+}
+
+/* Main App Styling */
+.main .block-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Custom Card Styling */
 .card {
-    background-color: #1f1f1f;
-    padding: 0.8rem 1rem;
-    border-radius: 12px;
+    background: linear-gradient(135deg, var(--card-bg) 0%, #2a2a2a 100%);
+    padding: 1.2rem 1.5rem;
+    border-radius: 16px;
     text-align: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    border: 1px solid #2c2c2c;
-    margin: 0.5rem;
-    transition: all 0.3s ease-in-out;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--accent-color);
+    margin: 0.8rem 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 194, 255, 0.1), transparent);
+    transition: left 0.6s;
+}
+
+.card:hover::before {
+    left: 100%;
 }
 
 .card:hover {
-    transform: scale(1.03);
-    box-shadow: 0 6px 20px rgba(0, 191, 255, 0.3);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 16px 48px var(--hover-color);
+    border-color: var(--primary-color);
 }
 
-/* Sidebar customization */
+/* Sidebar Customization */
 section[data-testid="stSidebar"] {
-    background-color: #111827 !important;
+    background: linear-gradient(180deg, #111827 0%, #0f172a 100%) !important;
+    border-right: 2px solid var(--accent-color);
 }
 
-/* .stSlider > div[data-baseweb="slider"] > div {
-    background: #00C2FF !important;
-} */
+section[data-testid="stSidebar"] > div {
+    background: transparent !important;
+}
+
+/* Sidebar Header */
+section[data-testid="stSidebar"] .stMarkdown h2 {
+    color: var(--primary-color) !important;
+    font-weight: 600;
+    text-align: center;
+    padding: 1rem 0;
+    border-bottom: 2px solid var(--accent-color);
+    margin-bottom: 1.5rem;
+}
+
+
+/* Selectbox Styling */
+.stSelectbox > div > div {
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--accent-color) !important;
+    border-radius: 8px !important;
+    color: var(--text-color) !important;
+}
+
+.stSelectbox > div > div:hover {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 1px var(--primary-color) !important;
+}
+
+/* Tabs Styling */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 8px;
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    padding: 4px;
+}
+
+.stTabs [data-baseweb="tab"] {
+    height: 50px;
+    padding-left: 20px;
+    padding-right: 20px;
+    background-color: transparent;
+    border-radius: 8px;
+    color: #888;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+    background-color: var(--accent-color);
+    color: var(--text-color);
+}
+
+.stTabs [aria-selected="true"] {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    font-weight: 600;
+}
+
+/* Metric Cards */
+div[data-testid="metric-container"] {
+    background: linear-gradient(135deg, var(--card-bg) 0%, #2a2a2a 100%);
+    border: 1px solid var(--accent-color);
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+div[data-testid="metric-container"]:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px var(--hover-color);
+    border-color: var(--primary-color);
+}
+
+div[data-testid="metric-container"] > div {
+    color: var(--text-color) !important;
+}
+
+div[data-testid="metric-container"] [data-testid="metric-value"] {
+    color: var(--primary-color) !important;
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+/* Button Styling */
+.stButton > button {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #0ea5e9 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 194, 255, 0.3);
+}
+
+.stButton > button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 194, 255, 0.4);
+    background: linear-gradient(135deg, #0ea5e9 0%, var(--primary-color) 100%);
+}
+
+.stButton > button:active {
+    transform: translateY(0);
+}
+
+/* Success/Error/Info Messages */
+.stSuccess {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-weight: 500;
+}
+
+.stError {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-weight: 500;
+}
+
+.stInfo {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #0ea5e9 100%);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-weight: 500;
+}
+
+/* Headers and Typography */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-color) !important;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+}
+
+h1 {
+    font-size: 2.5rem;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #0ea5e9 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    margin-bottom: 2rem;
+}
 
 h3, h5 {
-    color: #00C2FF;
+    color: var(--primary-color) !important;
+}
+
+/* DataFrame Styling */
+.stDataFrame {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Expander Styling */
+.streamlit-expanderHeader {
+    background-color: var(--card-bg) !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--accent-color) !important;
+    color: var(--text-color) !important;
+    font-weight: 500;
+}
+
+.streamlit-expanderHeader:hover {
+    border-color: var(--primary-color) !important;
+    background-color: #2a2a2a !important;
+}
+
+/* Number Input Styling */
+.stNumberInput > div > div > input {
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--accent-color) !important;
+    border-radius: 8px !important;
+    color: var(--text-color) !important;
+    font-weight: 500;
+}
+
+.stNumberInput > div > div > input:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 1px var(--primary-color) !important;
+}
+
+/* Text Input Styling */
+.stTextInput > div > div > input {
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--accent-color) !important;
+    border-radius: 8px !important;
+    color: var(--text-color) !important;
+    font-weight: 500;
+}
+
+.stTextInput > div > div > input:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 1px var(--primary-color) !important;
+}
+
+/* Plotly Chart Container */
+.js-plotly-plot .plotly .modebar {
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    border-radius: 8px;
+}
+
+/* Custom Animation Classes */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--background-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
+}
+
+/* Loading Spinner Override */
+.stSpinner > div {
+    border-top-color: var(--primary-color) !important;
+}
+
+/* Footer Styling */
+.footer {
+    background: linear-gradient(135deg, var(--card-bg) 0%, #2a2a2a 100%);
+    padding: 2rem;
+    border-radius: 16px;
+    text-align: center;
+    margin-top: 3rem;
+    border: 1px solid var(--accent-color);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .main .block-container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .card {
+        padding: 1rem;
+        margin: 0.5rem 0;
+    }
+    
+    h1 {
+        font-size: 2rem;
+    }
+}
+
+/* Hide Streamlit Branding */
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+
+/* Custom Tooltip */
+div[data-testid="stTooltipHoverTarget"] {
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--primary-color) !important;
+    border-radius: 8px !important;
+    color: var(--text-color) !important;
 }
