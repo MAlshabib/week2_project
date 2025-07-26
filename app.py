@@ -73,23 +73,33 @@ outlier_mask = (
 df_outliers = df_with_outliers[outlier_mask]
 df_no_outliers = df_with_outliers[~outlier_mask]
 
-# FIXED filter logic
+# FIXED and SAFE filter logic with .eq and debugging
+selected_city = selected_city.strip()
 if selected_city != "All":
     no_outliers_filter_mask = (
-        df_no_outliers["price"].between(price_range[0], price_range[1]) &
-        (df_no_outliers["city"] == selected_city)
+        df_no_outliers["city"].eq(selected_city) &
+        df_no_outliers["price"].between(price_range[0], price_range[1])
     )
     outliers_filter_mask = (
-        df_with_outliers["price"].between(price_range[0], price_range[1]) &
-        (df_with_outliers["city"] == selected_city)
+        df_with_outliers["city"].eq(selected_city) &
+        df_with_outliers["price"].between(price_range[0], price_range[1])
     )
 else:
     no_outliers_filter_mask = df_no_outliers["price"].between(price_range[0], price_range[1])
     outliers_filter_mask = df_with_outliers["price"].between(price_range[0], price_range[1])
 
+# Ensure city casing and whitespace match
+st.write("Selected city:", selected_city)
+st.write("Unique cities in cleaned data:", df_with_outliers["city"].unique())
+
+# Apply filters
 df_no_outliers_filtered = df_no_outliers[no_outliers_filter_mask].copy()
 df_outliers_filtered = df_outliers[outliers_filter_mask].copy()
 df_with_outliers_filtered = df_with_outliers[outliers_filter_mask].copy()
+
+# Debugging info
+st.write("Filtered no-outliers rows:", df_no_outliers_filtered.shape[0])
+st.write("Filtered with-outliers rows:", df_with_outliers_filtered.shape[0])
 
 def stat_card(label, value, unit="SAR"):
     if pd.isna(value):
