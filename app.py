@@ -6,8 +6,6 @@ from predictor import load_and_train_model
 
 model = load_and_train_model("SA_Aqar.csv")
 
-
-
 # Page Config
 st.set_page_config(
     page_title="Saudi Lands Dashboard",
@@ -26,7 +24,6 @@ df_original = load_data("SA_Aqar.csv")
 
 # Sidebar
 st.sidebar.header("Dashboard Filters")
-
 cities = sorted(df_original["city"].dropna().unique())
 selected_city = st.sidebar.selectbox("Select City", ["All"] + cities)
 
@@ -39,34 +36,22 @@ price_range = st.sidebar.slider(
     step=1000
 )
 
-
+# Preprocessing
 df_with_outliers = df_original.drop_duplicates()
-df_with_outliers = df_with_outliers.drop(columns = 'details')
+df_with_outliers = df_with_outliers.drop(columns='details')
 df_with_outliers = df_with_outliers[df_with_outliers['price'] >= 30000]
 df_with_outliers['city'] = df_with_outliers['city'].str.strip()
-
 df_with_outliers['city'] = df_with_outliers['city'].replace({
-    'الرياض': 'Riyadh',
-    'جدة': 'Jeddah',
-    'الدمام': 'Dammam',
-    'الخبر': 'Khobar'
+    'الرياض': 'Riyadh', 'جدة': 'Jeddah', 'الدمام': 'Dammam', 'الخبر': 'Khobar'
 })
-
 df_with_outliers['front'] = df_with_outliers['front'].replace({
-    'شمال': 'North',
-    'جنوب': 'South',
-    'شرق': 'East',
-    'غرب': 'West',
-    'شمال غربي': 'Northwest',
-    'شمال شرقي': 'Northeast',
-    'جنوب شرقي': 'Southeast',
-    'جنوب غربي': 'Southwest',
-    '3 شوارع': 'Three Streets',
-    '4 شوارع': 'Four Streets'
+    'شمال': 'North', 'جنوب': 'South', 'شرق': 'East', 'غرب': 'West',
+    'شمال غربي': 'Northwest', 'شمال شرقي': 'Northeast',
+    'جنوب شرقي': 'Southeast', 'جنوب غربي': 'Southwest',
+    '3 شوارع': 'Three Streets', '4 شوارع': 'Four Streets'
 })
 
-
-
+# Outlier Detection
 Q1_price = df_with_outliers['price'].quantile(0.25)
 Q3_price = df_with_outliers['price'].quantile(0.75)
 IQR_price = Q3_price - Q1_price
@@ -79,95 +64,50 @@ IQR_size = Q3_size - Q1_size
 lower_size = Q1_size - 1.5 * IQR_size
 upper_size = Q3_size + 1.5 * IQR_size
 
-# Define mask for outliers
 outlier_mask = (
     (df_with_outliers['price'] < lower_price) | (df_with_outliers['price'] > upper_price) |
     (df_with_outliers['size'] < lower_size) | (df_with_outliers['size'] > upper_size)
 )
 
-
-st.markdown("## 🏠 Predict Your House Price")
-
-with st.form("predict_form"):
-    col1, col2 = st.columns(2)
-
-    with col1:
-        city_input = st.selectbox("City", sorted(df_no_outliers['city'].unique()))
-        district_input = st.selectbox("District", sorted(df_no_outliers[df_no_outliers["city"] == city_input]["district"].unique()))
-        bedrooms = st.number_input("Bedrooms", min_value=0, max_value=20, value=3)
-        bathrooms = st.number_input("Bathrooms", min_value=0, max_value=20, value=2)
-        kitchen = st.number_input("Kitchens", min_value=0, max_value=5, value=1)
-
-    with col2:
-        livingrooms = st.number_input("Living Rooms", min_value=0, max_value=10, value=2)
-        garage = st.selectbox("Garage", ["Yes", "No"])
-        size = st.number_input("Size (m²)", min_value=50, max_value=1000, value=300)
-        property_age = st.number_input("Property Age (years)", min_value=0, max_value=100, value=5)
-
-    submitted = st.form_submit_button("Predict Price")
-
-    if submitted:
-        input_data = pd.DataFrame([{
-            'city': city_input,
-            'district': district_input,
-            'bedrooms': bedrooms,
-            'bathrooms': bathrooms,
-            'kitchen': kitchen,
-            'livingrooms': livingrooms,
-            'garage': 1 if garage == "Yes" else 0,
-            'size': size,
-            'property_age': property_age
-        }])
-
-        predicted_price = model.predict(input_data)[0]
-        st.success(f"🏷️ Estimated House Price: **{int(predicted_price):,} SAR**")
-
-
-# Title
-st.title("🏙️ Saudi Lands Dashboard")
-
-# Show preview of data frame as a dropdown
-with st.expander("📊 Data Overview"):
-    st.dataframe(df_original.head(10), use_container_width=True)
-
-# KPI Cards
-st.subheader("📊 Key Statistics")
-
-with_outliers_tab, without_outliers_tab = st.tabs(["With outliers", "Without outliers"])
-
-# This dataframe only contains outliers
+# Outlier separation
 df_outliers = df_with_outliers[outlier_mask]
 df_no_outliers = df_with_outliers[~outlier_mask]
 
-
-# Filter DataFrame based on selected city and price range
-no_outliers_filter_mask = (
-    df_no_outliers["price"].between(price_range[0], price_range[1]) &
-    (df_no_outliers["city"] == selected_city if selected_city != "All" else True)
-)
-
-print(price_range[0], price_range[1])
-
-outliers_filter_mask = (
-    df_with_outliers["price"].between(price_range[0], price_range[1]) &
-    (df_with_outliers["city"] == selected_city if selected_city != "All" else True)
-)
-
-df_with_outliers.to_csv(f"zg-{selected_city}.csv")
+# FIXED filter logic
+if selected_city != "All":
+    no_outliers_filter_mask = (
+        df_no_outliers["city"].eq(selected_city) &
+        df_no_outliers["price"].between(price_range[0], price_range[1])
+    )
+    outliers_filter_mask = (
+        df_with_outliers["city"].eq(selected_city) &
+        df_with_outliers["price"].between(price_range[0], price_range[1])
+    )
+else:
+    no_outliers_filter_mask = df_no_outliers["price"].between(price_range[0], price_range[1])
+    outliers_filter_mask = df_with_outliers["price"].between(price_range[0], price_range[1])
 
 df_no_outliers_filtered = df_no_outliers[no_outliers_filter_mask].copy()
 df_outliers_filtered = df_outliers[outliers_filter_mask].copy()
 df_with_outliers_filtered = df_with_outliers[outliers_filter_mask].copy()
 
-print(df_with_outliers_filtered)
-
 def stat_card(label, value, unit="SAR"):
-    st.markdown(f"""
-    <div class="card">
-        <h5>{label}</h5>
-        <h3>{int(value):,} {unit}</h3>
-    </div>
-    """, unsafe_allow_html=True)
+    if pd.isna(value):
+        st.markdown(f"""
+        <div class="card">
+            <h5>{label}</h5>
+            <h3>🚫 No Data</h3>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+        <div class="card">
+            <h5>{label}</h5>
+            <h3>{int(value):,} {unit}</h3>
+        </div>
+        """, unsafe_allow_html=True)
+
+with_outliers_tab, without_outliers_tab = st.tabs(["With Outliers", "Without Outliers"])
 
 with with_outliers_tab:
     st.subheader("📊 Key Statistics (With Outliers)")
