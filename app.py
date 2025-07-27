@@ -176,8 +176,11 @@ st.markdown("---")
 st.markdown("### 🔍 Analysis Navigation")
 
 # Create navigation buttons
-nav_col1, nav_col2, nav_col3, nav_col4, nav_col5 = st.columns(5)
+nav_col0, nav_col1, nav_col2, nav_col3, nav_col4, nav_col5 = st.columns(6)
 
+with nav_col0:
+    if st.button("📊 Overview", use_container_width=True):
+        st.session_state.analysis_type = "Overview"
 with nav_col1:
     if st.button("📈 Price Distribution", use_container_width=True):
         st.session_state.analysis_type = "Price Distribution"
@@ -200,7 +203,7 @@ with nav_col5:
 
 # Initialize session state if not exists
 if 'analysis_type' not in st.session_state:
-    st.session_state.analysis_type = "Price Distribution"
+    st.session_state.analysis_type = "Overview"
 
 # Display current analysis type
 analysis_type = st.session_state.analysis_type
@@ -293,7 +296,29 @@ def train_and_compare_models(df):
 # ANALYSIS SECTIONS (Using current_df which respects the outlier toggle)
 
 # Price Distribution Analysis 
-if analysis_type == "Price Distribution":
+
+if analysis_type == "Overview":
+    # Statistical Summary
+    st.subheader("📊 Statistical Summary")
+    x_clean = current_df['price'].tolist()
+    
+    stats_data = {
+        'Metric': ['Count', 'Mean', 'Median', 'Std Dev', 'Variance', 'Min', 'Max', 'Range'],
+        'Value': [
+            len(x_clean),
+            f"{np.mean(x_clean):,.0f}",
+            f"{np.median(x_clean):,.0f}",
+            f"{np.std(x_clean):,.0f}",
+            f"{np.var(x_clean):,.0f}",
+            f"{min(x_clean):,.0f}",
+            f"{max(x_clean):,.0f}",
+            f"{max(x_clean) - min(x_clean):,.0f}"
+        ]
+    }
+    
+    stats_df = pd.DataFrame(stats_data)
+    st.dataframe(stats_df, use_container_width=True)
+elif analysis_type == "Price Distribution":
     st.subheader("📈 Price Distribution Analysis")
     
     col1, col2 = st.columns(2)
@@ -457,7 +482,7 @@ elif analysis_type == "Geographic Analysis":
             points='outliers'
         )
         fig_direction.update_layout(title_x=0, xaxis_tickangle=-45)
-        st.plotly_chart(fig_direction, use_container_width=True)
+        # st.plotly_chart(fig_direction, use_container_width=True)
 
 # Property Features Analysis 
 elif analysis_type == "Property Features":
@@ -538,7 +563,7 @@ elif analysis_type == "Property Features":
             legend=dict(x=0.5, xanchor='center', y=-0.15, orientation='h')
         )
         
-        st.plotly_chart(fig_combined, use_container_width=True)
+        # st.plotly_chart(fig_combined, use_container_width=True)
     
     # Display additional property features if available
     feature_cols = st.columns(3)
@@ -597,39 +622,50 @@ elif analysis_type == "Advanced Analytics":
     
     with col1:
         # Price vs Size Scatter Plot (Simple)
-        fig_scatter = px.scatter(
-            current_df, 
-            x='size', 
-            y='price',
-            title='Property Size vs Rental Price',
-            labels={'size': 'Property Size (m²)', 'price': 'Rental Price (SAR)'},
-            opacity=0.6,
-            color='city'
-        )
-        fig_scatter.update_layout(title_x=0)
-        st.plotly_chart(fig_scatter, use_container_width=True)
-        
-        # Statistical Summary
-        st.subheader("📊 Statistical Summary")
-        x_clean = current_df['price'].tolist()
-        
-        stats_data = {
-            'Metric': ['Count', 'Mean', 'Median', 'Std Dev', 'Variance', 'Min', 'Max', 'Range'],
-            'Value': [
-                len(x_clean),
-                f"{np.mean(x_clean):,.0f}",
-                f"{np.median(x_clean):,.0f}",
-                f"{np.std(x_clean):,.0f}",
-                f"{np.var(x_clean):,.0f}",
-                f"{min(x_clean):,.0f}",
-                f"{max(x_clean):,.0f}",
-                f"{max(x_clean) - min(x_clean):,.0f}"
+        x = current_df['size'].values.reshape(-1, 1)
+        y = current_df['price'].values
+
+        model = LinearRegression()
+        model.fit(x, y)
+        y_pred = model.predict(x)
+
+        # Calculate R-squared
+        r_squared = model.score(x, y)
+
+        # Create scatter plot
+        fig = go.Figure()
+
+
+        fig.add_trace(go.Scatter(x=current_df['size'], y=current_df['price'],
+                                mode='markers',
+                                name='Actual Data',
+                                marker=dict(color='rgba(99, 110, 250, 0.6)', size=6)))
+
+        # Regression line
+        fig.add_trace(go.Scatter(x=current_df['size'], y=y_pred,
+                                mode='lines',
+                                name='Regression Line',
+                                line=dict(color='red')))
+
+        fig.update_layout(
+            title='Relationship between Size and Price',
+            xaxis_title='Size (m²)',
+            yaxis_title='Price (SAR)',
+            annotations=[
+                dict(
+                    x=0.05,
+                    y=0.95,
+                    xref='paper',
+                    yref='paper',
+                    text=f"R² = {r_squared:.2f}",
+                    showarrow=False,
+                    font=dict(size=14, color='black')
+                )
             ]
-        }
-        
-        stats_df = pd.DataFrame(stats_data)
-        st.dataframe(stats_df, use_container_width=True)
-        
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        st.text(f"R² = {r_squared:.2f} (Coefficient of Determination)")
+
         # Correlation Matrix (if multiple numerical columns exist)
         numerical_cols = ['price', 'size']
         if 'bedrooms' in current_df.columns:
@@ -640,22 +676,39 @@ elif analysis_type == "Advanced Analytics":
             numerical_cols.append('property_age')
         
         if len(numerical_cols) > 2:
-            st.subheader("🔗 Feature Correlations")
-            corr_matrix = current_df[numerical_cols].corr()
+            # Price Distribution Analysis
+            st.subheader("📊 Price Distribution Insights")
             
-            fig_corr = px.imshow(
-                corr_matrix,
-                text_auto=True,
-                aspect="auto",
-                title="Correlation Matrix",
-                color_continuous_scale='RdBu'
-            )
-            fig_corr.update_layout(title_x=0)
-            st.plotly_chart(fig_corr, use_container_width=True)
+            # Price quartiles
+            q1 = current_df['price'].quantile(0.25)
+            q2 = current_df['price'].quantile(0.50)  # median
+            q3 = current_df['price'].quantile(0.75)
+            
+            st.write(f"**Price Quartiles:**")
+            st.write(f"• Q1 (25th percentile): {q1:,.0f} SAR")
+            st.write(f"• Q2 (Median): {q2:,.0f} SAR") 
+            st.write(f"• Q3 (75th percentile): {q3:,.0f} SAR")
+            
+            # IQR
+            iqr = q3 - q1
+            st.write(f"• Interquartile Range (IQR): {iqr:,.0f} SAR")
+            # st.subheader("🔗 Feature Correlations")
+            # corr_matrix = current_df[numerical_cols].corr()
+            
+            # fig_corr = px.imshow(
+            #     corr_matrix,
+            #     text_auto=True,
+            #     aspect="auto",
+            #     title="Correlation Matrix",
+            #     color_continuous_scale='RdBu'
+            # )
+            # fig_corr.update_layout(title_x=0)
+            # st.plotly_chart(fig_corr, use_container_width=True)
     
     with col2:
         # High-value Properties Analysis
         high_price_threshold = st.slider("High Price Threshold (SAR)", 100000, 500000, 200000, 10000)
+        
         high_price_props = current_df[current_df['price'] > high_price_threshold]
         
         st.metric("High-Value Properties", f"{len(high_price_props):,}")
@@ -685,23 +738,6 @@ elif analysis_type == "Advanced Analytics":
             )
             fig_high_value.update_layout(title_x=0)
             st.plotly_chart(fig_high_value, use_container_width=True)
-        
-        # Price Distribution Analysis
-        st.subheader("📊 Price Distribution Insights")
-        
-        # Price quartiles
-        q1 = current_df['price'].quantile(0.25)
-        q2 = current_df['price'].quantile(0.50)  # median
-        q3 = current_df['price'].quantile(0.75)
-        
-        st.write(f"**Price Quartiles:**")
-        st.write(f"• Q1 (25th percentile): {q1:,.0f} SAR")
-        st.write(f"• Q2 (Median): {q2:,.0f} SAR") 
-        st.write(f"• Q3 (75th percentile): {q3:,.0f} SAR")
-        
-        # IQR
-        iqr = q3 - q1
-        st.write(f"• Interquartile Range (IQR): {iqr:,.0f} SAR")
 
 # Machine Learning Models
 elif analysis_type == "Machine Learning Models":
