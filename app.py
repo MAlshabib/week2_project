@@ -135,6 +135,12 @@ df_with_outliers_filtered = df_with_outliers[outliers_filter_mask].copy()
 # Main Title
 st.title("🏠 Saudi Arabia Real Estate Analytics Dashboard")
 
+# Add data preview
+st.sidebar.subheader("📊 Data Preview")
+with st.expander("Show Data Sample", expanded=False):
+    st.dataframe(df_original.head(10), use_container_width=True)
+
+
 # TOP SECTION: Outlier Toggle with Key Statistics
 st.markdown("### 📊 Data Overview")
 
@@ -300,7 +306,7 @@ def train_and_compare_models(df):
 if analysis_type == "Overview":
     # Statistical Summary
     st.subheader("📊 Statistical Summary")
-    x_clean = current_df['price'].tolist()
+    x_clean = df_original['price'].tolist()
     
     stats_data = {
         'Metric': ['Count', 'Mean', 'Median', 'Std Dev', 'Variance', 'Min', 'Max', 'Range'],
