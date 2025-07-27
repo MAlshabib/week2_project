@@ -300,7 +300,7 @@ def train_and_compare_models(df):
                 "RMSE": round(rmse, 2),
                 "R²": round(r2, 3),
                 "MAPE (%)": round(mape, 2),
-                "Accuracy (%)": round(accuracy, 2)
+                # "Accuracy (%)": round(accuracy, 2)
             })
         except Exception as e:
             st.warning(f"Failed to train {name}: {str(e)}")
