@@ -255,15 +255,22 @@ def train_and_compare_models(df):
     # Split dataset
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
-    # Define models
+    # Define models - Core 3 + XGBoost
     models = {
         "LinearRegression": LinearRegression(),
         "RandomForest": RandomForestRegressor(n_estimators=100, random_state=42),
-        "KNN": KNeighborsRegressor()
+        "KNN": KNeighborsRegressor(n_neighbors=5)
     }
     
+    # Add XGBoost if available
     if xgb_available:
-        models["XGBoost"] = XGBRegressor(n_estimators=100, random_state=42, verbosity=0)
+        models["XGBoost"] = XGBRegressor(
+            n_estimators=100, 
+            random_state=42, 
+            verbosity=0,
+            learning_rate=0.1,
+            max_depth=6
+        )
     
     # Store results
     results = []
@@ -271,29 +278,33 @@ def train_and_compare_models(df):
     
     # Train and evaluate each model
     for name, model in models.items():
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
-        
-        model_predictions[name] = {
-            'y_test': y_test.values,
-            'y_pred': y_pred,
-            'model': model
-        }
-        
-        mae = mean_absolute_error(y_test, y_pred)
-        rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-        r2 = r2_score(y_test, y_pred)
-        mape = np.mean(np.abs((y_test - y_pred) / y_test)) * 100
-        accuracy = 100 - mape
-        
-        results.append({
-            "Model": name,
-            "MAE": round(mae, 2),
-            "RMSE": round(rmse, 2),
-            "R²": round(r2, 3),
-            "MAPE (%)": round(mape, 2),
-            "Accuracy (%)": round(accuracy, 2)
-        })
+        try:
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
+            
+            model_predictions[name] = {
+                'y_test': y_test.values,
+                'y_pred': y_pred,
+                'model': model
+            }
+            
+            mae = mean_absolute_error(y_test, y_pred)
+            rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+            r2 = r2_score(y_test, y_pred)
+            mape = np.mean(np.abs((y_test - y_pred) / y_test)) * 100
+            accuracy = 100 - mape
+            
+            results.append({
+                "Model": name,
+                "MAE": round(mae, 2),
+                "RMSE": round(rmse, 2),
+                "R²": round(r2, 3),
+                "MAPE (%)": round(mape, 2),
+                "Accuracy (%)": round(accuracy, 2)
+            })
+        except Exception as e:
+            st.warning(f"Failed to train {name}: {str(e)}")
+            continue
     
     results_df = pd.DataFrame(results).sort_values(by="R²", ascending=False)
     
@@ -324,6 +335,7 @@ if analysis_type == "Overview":
     
     stats_df = pd.DataFrame(stats_data)
     st.dataframe(stats_df, use_container_width=True)
+
 elif analysis_type == "Price Distribution":
     st.subheader("📈 Price Distribution Analysis")
     
@@ -458,37 +470,6 @@ elif analysis_type == "Geographic Analysis":
         st.plotly_chart(fig_districts, use_container_width=True)
     else:
         st.info("District information not available in the dataset")
-    
-    # Direction Analysis (if front column exists)
-    if 'front' in current_df.columns:
-        def simplify_direction(direction):
-            direction = str(direction).strip()
-            if 'North' in direction:
-                return 'North'
-            elif 'South' in direction:
-                return 'South'
-            elif 'East' in direction:
-                return 'East'
-            elif 'West' in direction:
-                return 'West'
-            else:
-                return 'Other'
-        
-        current_df_copy = current_df.copy()
-        current_df_copy['simple_front'] = current_df_copy['front'].apply(simplify_direction)
-        current_df_copy['city_front_cleaned'] = current_df_copy['city'] + ' - ' + current_df_copy['simple_front']
-        
-        fig_direction = px.box(
-            current_df_copy,
-            x='city_front_cleaned',
-            y='price',
-            title='Price by City and Direction',
-            labels={'city_front_cleaned': 'City - Direction', 'price': 'Price (SAR)'},
-            color='city',
-            points='outliers'
-        )
-        fig_direction.update_layout(title_x=0, xaxis_tickangle=-45)
-        # st.plotly_chart(fig_direction, use_container_width=True)
 
 # Property Features Analysis 
 elif analysis_type == "Property Features":
@@ -569,7 +550,7 @@ elif analysis_type == "Property Features":
             legend=dict(x=0.5, xanchor='center', y=-0.15, orientation='h')
         )
         
-        # st.plotly_chart(fig_combined, use_container_width=True)
+        st.plotly_chart(fig_combined, use_container_width=True)
     
     # Display additional property features if available
     feature_cols = st.columns(3)
@@ -631,16 +612,15 @@ elif analysis_type == "Advanced Analytics":
         x = current_df['size'].values.reshape(-1, 1)
         y = current_df['price'].values
 
-        model = LinearRegression()
-        model.fit(x, y)
-        y_pred = model.predict(x)
+        model_lr = LinearRegression()
+        model_lr.fit(x, y)
+        y_pred = model_lr.predict(x)
 
         # Calculate R-squared
-        r_squared = model.score(x, y)
+        r_squared = model_lr.score(x, y)
 
         # Create scatter plot
         fig = go.Figure()
-
 
         fig.add_trace(go.Scatter(x=current_df['size'], y=current_df['price'],
                                 mode='markers',
@@ -672,44 +652,22 @@ elif analysis_type == "Advanced Analytics":
         st.plotly_chart(fig, use_container_width=True)
         st.text(f"R² = {r_squared:.2f} (Coefficient of Determination)")
 
-        # Correlation Matrix (if multiple numerical columns exist)
-        numerical_cols = ['price', 'size']
-        if 'bedrooms' in current_df.columns:
-            numerical_cols.append('bedrooms')
-        if 'bathrooms' in current_df.columns:
-            numerical_cols.append('bathrooms')
-        if 'property_age' in current_df.columns:
-            numerical_cols.append('property_age')
+        # Price Distribution Analysis
+        st.subheader("📊 Price Distribution Insights")
         
-        if len(numerical_cols) > 2:
-            # Price Distribution Analysis
-            st.subheader("📊 Price Distribution Insights")
-            
-            # Price quartiles
-            q1 = current_df['price'].quantile(0.25)
-            q2 = current_df['price'].quantile(0.50)  # median
-            q3 = current_df['price'].quantile(0.75)
-            
-            st.write(f"**Price Quartiles:**")
-            st.write(f"• Q1 (25th percentile): {q1:,.0f} SAR")
-            st.write(f"• Q2 (Median): {q2:,.0f} SAR") 
-            st.write(f"• Q3 (75th percentile): {q3:,.0f} SAR")
-            
-            # IQR
-            iqr = q3 - q1
-            st.write(f"• Interquartile Range (IQR): {iqr:,.0f} SAR")
-            # st.subheader("🔗 Feature Correlations")
-            # corr_matrix = current_df[numerical_cols].corr()
-            
-            # fig_corr = px.imshow(
-            #     corr_matrix,
-            #     text_auto=True,
-            #     aspect="auto",
-            #     title="Correlation Matrix",
-            #     color_continuous_scale='RdBu'
-            # )
-            # fig_corr.update_layout(title_x=0)
-            # st.plotly_chart(fig_corr, use_container_width=True)
+        # Price quartiles
+        q1 = current_df['price'].quantile(0.25)
+        q2 = current_df['price'].quantile(0.50)  # median
+        q3 = current_df['price'].quantile(0.75)
+        
+        st.write(f"**Price Quartiles:**")
+        st.write(f"• Q1 (25th percentile): {q1:,.0f} SAR")
+        st.write(f"• Q2 (Median): {q2:,.0f} SAR") 
+        st.write(f"• Q3 (75th percentile): {q3:,.0f} SAR")
+        
+        # IQR
+        iqr = q3 - q1
+        st.write(f"• Interquartile Range (IQR): {iqr:,.0f} SAR")
     
     with col2:
         # High-value Properties Analysis
@@ -883,20 +841,20 @@ elif analysis_type == "Machine Learning Models":
                     # Display results table
                     st.subheader("🏆 Model Performance Comparison")
                     
-                    # Color-code the best performing model
-                    def highlight_best(s):
+                    # Highlight the best performing model (highest R²)
+                    def highlight_best_model(s):
                         if s.name in ['R²', 'Accuracy (%)']:
-                            is_max = s == s.max()
+                            is_best = s == s.max()
                         else:  # MAE, RMSE, MAPE - lower is better
-                            is_max = s == s.min()
-                        return ['background-color: #90EE90' if v else '' for v in is_max]
+                            is_best = s == s.min()
+                        return ['' if v else '' for v in is_best]
                     
-                    styled_results = results_df.style.apply(highlight_best)
+                    styled_results = results_df.style.apply(highlight_best_model)
                     st.dataframe(styled_results, use_container_width=True)
                     
-                    # Best model insights
+                    # Display best model info
                     best_model = results_df.iloc[0]
-                    st.info(f"🥇 **Best Model:** {best_model['Model']} with R² score of {best_model['R²']}")
+                    st.info(f"🥇 **Best Performing Model (Highlighted in Green):** {best_model['Model']} with R² score of {best_model['R²']}")
                     
                     # Model performance visualization
                     col1, col2 = st.columns(2)
@@ -907,7 +865,7 @@ elif analysis_type == "Machine Learning Models":
                             results_df,
                             x='Model',
                             y='R²',
-                            title='R² Score Comparison',
+                            title='R² Score Comparison (Higher is Better)',
                             color='Model',
                             text='R²'
                         )
@@ -929,6 +887,38 @@ elif analysis_type == "Machine Learning Models":
                         fig_mae.update_layout(showlegend=False, title_x=0)
                         st.plotly_chart(fig_mae, use_container_width=True)
                     
+                    # Additional metrics visualization
+                    if len(results_df) > 2:  # Only show additional charts if we have more than 2 models
+                        col3, col4 = st.columns(2)
+                        
+                        with col3:
+                            # RMSE Comparison
+                            fig_rmse = px.bar(
+                                results_df,
+                                x='Model',
+                                y='RMSE',
+                                title='Root Mean Square Error (Lower is Better)',
+                                color='Model',
+                                text='RMSE'
+                            )
+                            fig_rmse.update_traces(texttemplate='%{text:.0f}', textposition='outside')
+                            fig_rmse.update_layout(showlegend=False, title_x=0)
+                            st.plotly_chart(fig_rmse, use_container_width=True)
+                        
+                        with col4:
+                            # Accuracy Comparison
+                            fig_acc = px.bar(
+                                results_df,
+                                x='Model',
+                                y='Accuracy (%)',
+                                title='Model Accuracy (Higher is Better)',
+                                color='Model',
+                                text='Accuracy (%)'
+                            )
+                            fig_acc.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
+                            fig_acc.update_layout(showlegend=False, title_x=0)
+                            st.plotly_chart(fig_acc, use_container_width=True)
+                    
                     # Features used
                     st.subheader("🔧 Features Used in Training")
                     st.write(f"**Number of features:** {len(features_used)}")
@@ -938,6 +928,13 @@ elif analysis_type == "Machine Learning Models":
                     for i, feature in enumerate(features_used):
                         with feature_cols[i % 3]:
                             st.write(f"• {feature}")
+                    
+                    # Model comparison summary
+                    with st.expander("📈 Model Performance Summary"):
+                        st.markdown("**Top 3 Models by R² Score:**")
+                        top_3 = results_df.head(3)
+                        for idx, row in top_3.iterrows():
+                            st.write(f"**{row['Model']}:** R² = {row['R²']}, MAE = {row['MAE']:,.0f}, Accuracy = {row['Accuracy (%)']:.1f}%")
                     
                 except Exception as e:
                     st.error(f"❌ Model training failed: {str(e)}")
@@ -960,6 +957,8 @@ elif analysis_type == "Machine Learning Models":
             - **R² Score:** Proportion of variance explained by the model (higher is better)
             - **MAPE:** Mean Absolute Percentage Error
             - **Accuracy:** 100% - MAPE
+            
+            **Note:** The model with the highest R² score is highlighted in green as the best performer.
             """)
     
     with ml_tab3:
@@ -1117,5 +1116,19 @@ elif analysis_type == "Machine Learning Models":
             - More data generally leads to better predictions
             - Feature completeness affects model accuracy
             - Outlier handling significantly impacts results
+            
+            **Model Selection Tips:**
+            - Linear Regression: Good baseline, interpretable
+            - Random Forest: Handles non-linear relationships well
+            - XGBoost/LightGBM: Often best performance but less interpretable
+            - Choose based on your priority: interpretability vs accuracy
             """)
 
+# Footer
+st.markdown("---")
+st.markdown("""
+<div style='text-align: center; color: #666;'>
+    <p>🏠 Saudi Arabia Real Estate Analytics Dashboard</p>
+    <p>Built with Streamlit • Data Analysis • Machine Learning</p>
+</div>
+""", unsafe_allow_html=True)
